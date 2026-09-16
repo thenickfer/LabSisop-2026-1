@@ -1,0 +1,1 @@
+savedcmd_/workspaces/codespaces-blank/buildroot-2025.02.16/modules/hello/Module.symvers :=  scripts/mod/modpost -M        -o /workspaces/codespaces-blank/buildroot-2025.02.16/modules/hello/Module.symvers -T /workspaces/codespaces-blank/buildroot-2025.02.16/modules/hello/modules.order -i Module.symvers -e 

@@ -1,0 +1,1 @@
+savedcmd_/workspaces/codespaces-blank/buildroot-2025.02.16/modules/hello/modules.order := {   echo /workspaces/codespaces-blank/buildroot-2025.02.16/modules/hello/hello.o; :; } > /workspaces/codespaces-blank/buildroot-2025.02.16/modules/hello/modules.order

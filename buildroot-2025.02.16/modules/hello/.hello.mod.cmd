@@ -1,0 +1,1 @@
+savedcmd_/workspaces/codespaces-blank/buildroot-2025.02.16/modules/hello/hello.mod := printf '%s\n'   hello.o | awk '!x[$$0]++ { print("/workspaces/codespaces-blank/buildroot-2025.02.16/modules/hello/"$$0) }' > /workspaces/codespaces-blank/buildroot-2025.02.16/modules/hello/hello.mod
