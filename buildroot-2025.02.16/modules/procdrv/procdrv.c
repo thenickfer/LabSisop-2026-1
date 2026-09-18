@@ -15,10 +15,10 @@ MODULE_VERSION("0.0.1");
 static char *greeting = NULL;
 static int id = -1;
 
-module_param(greeting, charp, 0444);
+module_param(greeting, charp, 0644);
 MODULE_PARM_DESC(greeting, "String fornecida pelo arquivo em /proc");
 
-module_param(id, int, 0444);
+module_param(id, int, 0644);
 MODULE_PARM_DESC(id, "Identificador fornecido pelo arquivo em /proc");
 
 static ssize_t procfile_read(struct file *, char __user *, size_t, loff_t *);
