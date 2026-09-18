@@ -65,7 +65,7 @@ static ssize_t procfile_read(struct file *filep, char __user *buffer, size_t len
         return 0;
 
     char tmpbuf[256];
-    int tmplen = snprintf(tmpbuf, sizeof(tmpbuf), "%s, %d reads", greeting, ++reads);
+    int tmplen = snprintf(tmpbuf, sizeof(tmpbuf), "[%d] %s, %d reads", greeting, ++reads);
 
     if (tmplen > len)
         tmplen = len;
