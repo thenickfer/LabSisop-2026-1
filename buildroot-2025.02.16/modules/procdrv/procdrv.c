@@ -12,6 +12,15 @@ MODULE_AUTHOR("Nicolas");
 MODULE_DESCRIPTION("Proc Driver");
 MODULE_VERSION("0.0.1");
 
+static char *greeting = NULL;
+static int id = -1;
+
+module_param(greeting, charp, 0444);
+MODULE_PARM_DESC(greeting, "String fornecida pelo arquivo em /proc");
+
+module_param(id, int, 0444);
+MODULE_PARM_DESC(id, "Identificador fornecido pelo arquivo em /proc");
+
 static ssize_t procfile_read(struct file *, char __user *, size_t, loff_t *);
 
 static struct proc_ops proc_file_fops = {
@@ -23,7 +32,12 @@ static struct proc_dir_entry *proc_file;
 static int procdrv_init(void)
 {
     pr_info("Inserting the Proc module\n");
-
+    
+    if (greeting == NULL || id < 0) {
+        pr_alert("Missing parameters. Example: modprobe procdrv greeting=\"Ola, mundo!\" id=42\n");
+        return -EINVAL;
+    }
+    
     proc_file = proc_create(PROCFS_NAME, 0644, NULL, &proc_file_fops);
     if (proc_file == NULL) {
         pr_alert("Could not initialize /proc/%s\n", PROCFS_NAME);
@@ -44,7 +58,6 @@ static void procdrv_exit(void)
 static ssize_t procfile_read(struct file *filep, char __user *buffer, size_t len, loff_t *offset)
 {
     static int reads = 0;
-    char *greeting = "HelloWorld!";
 
     pr_info("Calling procfile_read\n");
 
