@@ -7,3 +7,4 @@ make -C $BASE_DIR/../apps/banner
 make -C $BASE_DIR/../apps/monitor
 make -C $BASE_DIR/../modules/hello
 make -C $BASE_DIR/../modules/miscdrv
+make -C $BASE_DIR/../modules/procdrv
