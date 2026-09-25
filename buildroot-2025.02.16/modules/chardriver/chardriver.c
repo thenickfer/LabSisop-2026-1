@@ -6,6 +6,7 @@
 #include <linux/slab.h>
 #include <linux/uaccess.h>
 #include <linux/errno.h>
+#include <linux/list.h>
 
 #define DEVICE_NAME "chardrv"
 
@@ -32,6 +33,16 @@ static int major;
 
 static struct class *cls = NULL;
 static struct device *dev = NULL;
+
+
+struct message {
+    char *data;
+    size_t size;
+    struct list_head node;
+};
+
+static LIST_HEAD(messages);
+
 
 static int chardrv_init(void)
 {
@@ -100,38 +111,81 @@ static ssize_t chardrv_write(struct file *filep, const char __user *buffer, size
         return -EINVAL;
     }
 
-    kfree(message);
-    size_of_message = 0;
-
-    message = kmalloc(len + 1, GFP_KERNEL);
-    if (message == NULL) {
-        pr_alert("Failed to allocate memory for the message\n");
+    struct message *msg = kmalloc(sizeof(struct message), GFP_KERNEL);
+    if (msg == NULL) {
+        pr_alert("Failed to allocate memory for the message node\n");
         return -ENOMEM;
     }
 
-    if (copy_from_user(message, buffer, len) != 0) {
+    msg->data = kmalloc(len + 1, GFP_KERNEL);
+    if (msg->data == NULL) {
+        pr_alert("Failed to allocate memory for the message data\n");
+        kfree(msg);
+        return -ENOMEM;
+    }
+
+    if (copy_from_user(msg->data, buffer, len) != 0) {
         pr_alert("Failed to receive the message from the user\n");
-        kfree(message);
-        message = NULL;
+        kfree(msg->data);
+        kfree(msg);
         return -EFAULT;
     }
 
-    message[len] = '\0';
-    size_of_message = len;
+    msg->data[len] = '\0';
+    msg->size = len;
 
-    pr_info("Allocated %zu bytes for a message with %zu characters\n", len + 1, len);
+    list_add_tail(&msg->node, &messages);
+    pr_info("Queued a message with %zu characters\n", len);
+
     return len;
 }
 
 static ssize_t chardrv_read(struct file *filep, char __user *buffer, size_t len, loff_t *offset)
 {
-    pr_info("Sending up to %zu characters to the user\n", len);
-    return simple_read_from_buffer(buffer, len, offset, message, size_of_message);
+    if (*offset > 0)
+        return 0;
+
+    if (list_empty(&messages)) {
+        pr_info("No messages to read\n");
+        return 0;
+    }
+
+    struct message *msg = list_first_entry(&messages, struct message, node);
+
+    if (len < msg->size) {
+        pr_alert("User buffer is too small for the message\n");
+        return -EINVAL;
+    }
+
+    if (copy_to_user(buffer, msg->data, msg->size) != 0) {
+        pr_alert("Failed to send the message to the user\n");
+        return -EFAULT;
+    }
+
+    size_t size = msg->size;
+
+    list_del(&msg->node);
+    kfree(msg->data);
+    kfree(msg);
+
+    pr_info("Sent and freed a message with %zu characters\n", size);
+
+    *offset += size;
+    return size;
 }
 
 static void chardrv_exit(void)
 {
-    kfree(message);
+    struct message *msg, *tmp;
+    int count = 0;
+
+    list_for_each_entry_safe(msg, tmp, &messages, node) {
+        list_del(&msg->node);
+        kfree(msg->data);
+        kfree(msg);
+        count++;
+    }
+    pr_info("Freed %d pending message(s)\n", count);
 
     device_destroy(cls, MKDEV(major, 0));
     class_destroy(cls);
