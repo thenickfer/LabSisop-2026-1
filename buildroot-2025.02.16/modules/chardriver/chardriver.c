@@ -35,14 +35,6 @@ static struct class *cls = NULL;
 static struct device *dev = NULL;
 
 
-struct message {
-    char *data;
-    size_t size;
-    struct list_head node;
-};
-
-static LIST_HEAD(messages);
-
 
 static int chardrv_init(void)
 {
@@ -104,6 +96,20 @@ static unsigned int max_size = 256;
 module_param(max_size, uint, 0444);
 MODULE_PARM_DESC(max_size, "Tamanho maximo de cada mensagem, em bytes");
 
+struct message {
+    char *data;
+    size_t size;
+    struct list_head node;
+};
+
+static LIST_HEAD(messages);
+
+static size_t num_messages = 0;
+
+static unsigned int max_messages = 5;
+module_param(max_messages = 5);
+MODULE_PARM_DESC(max_messages, "Tamanho maximo da fila, em mensagens");
+
 static ssize_t chardrv_write(struct file *filep, const char __user *buffer, size_t len, loff_t *offset)
 {
     if (len > max_size) {
@@ -133,6 +139,17 @@ static ssize_t chardrv_write(struct file *filep, const char __user *buffer, size
 
     msg->data[len] = '\0';
     msg->size = len;
+
+    if(++num_messages > max_messages){
+        tmp = list_first_entry(&messages, struct message, node);
+        size_t size = tmp->size;
+
+        list_del(&tmp->node);
+        kfree(tmp->data);
+        kfree(tmp);
+
+        pr_info("Discarded a message with %zu characters due to full queue\n", size);
+    }
 
     list_add_tail(&msg->node, &messages);
     pr_info("Queued a message with %zu characters\n", len);
