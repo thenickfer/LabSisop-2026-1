@@ -9,3 +9,4 @@ make -C $BASE_DIR/../modules/hello
 make -C $BASE_DIR/../modules/miscdrv
 make -C $BASE_DIR/../modules/procdrv
 make -C $BASE_DIR/../modules/timerdrv
+make -C $BASE_DIR/../modules/chardriver
